@@ -22,13 +22,10 @@ public class SkeletonController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // Get necessary components
         GameObject enemyBox = GameObject.FindWithTag("Enemy");
-        // Make sure to find the playerSkele GameObject
         playerSkele = GameObject.Find("Skeleton");
         skeleBox = playerSkele.AddComponent<BoxCollider>();
-
-
-        // Get necessary components
         skeletonRb = playerSkele.GetComponent<Rigidbody>();
         playerAnim = playerSkele.GetComponent<Animator>();
 
@@ -42,8 +39,10 @@ public class SkeletonController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //calls the method to move skeleton
         SkeleMovement();
 
+        //Adds Atacking animation for proximity detection
         /*if (isInCombat == true) 
         {
 
@@ -60,7 +59,7 @@ public class SkeletonController : MonoBehaviour
 
 
 
-
+    //Moves the skeleton on X and Z
     void SkeleMovement()
     {
         float horizontalInput = Input.GetAxis("Horizontal");
@@ -70,7 +69,7 @@ public class SkeletonController : MonoBehaviour
 
         // Update the Rigidbody velocity to move the player
         skeletonRb.velocity = new Vector3(movementInput.x, skeletonRb.velocity.y, movementInput.z);
-
+        //Provides animation uppon imput switching between idle and walking and rotates the chatacter
         if (horizontalInput != 0 || verticalInput != 0)
         {
             playerAnim.SetBool("isWalking", true);
@@ -95,11 +94,12 @@ public class SkeletonController : MonoBehaviour
             playerAnim.SetBool("isWalking", false);
             playerAnim.runtimeAnimatorController = idleSkele;
         }
-    }
+    } 
 
-    /*private void OnTriggerEnter(Collider other)
+    //Adds the functionality of when entering the boxcolider of enemy bool isincombat
+    private void OnTriggerEnter(Collider other)
     {
-        if (other = enemyBox)
+        if (other.CompareTag("Enemy"))
         {
 
             isInCombat = true;
@@ -108,7 +108,7 @@ public class SkeletonController : MonoBehaviour
         {
             isInCombat = false;
         }
-    }*/
+    }
 
 
 }
