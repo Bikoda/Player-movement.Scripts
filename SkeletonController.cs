@@ -4,10 +4,9 @@ using UnityEditor.Animations;
 using UnityEngine;
 
 public class SkeletonController : MonoBehaviour
-
 {
 
-    private float skeletonSpeed = 1.0f;
+    public float skeletonSpeed = 1.0f;
     public float rotateSkele = 90.0f;
     public float rotationSpeed = 100.0f;
     public RuntimeAnimatorController walkSkele;
@@ -19,16 +18,23 @@ public class SkeletonController : MonoBehaviour
     private Animator playerAnim;
     public bool isInCombat = false;
 
+    private enum Direction
+    {
+        Forward,
+        Right,
+        Backward,
+        Left
+    }
+
+    private Direction currentDirection = Direction.Forward;
+
     // Start is called before the first frame update
     void Start()
     {
-        GameObject enemyBox = GameObject.FindWithTag("Enemy");
-        // Make sure to find the playerSkele GameObject
-        playerSkele = GameObject.Find("Skeleton");
-        skeleBox = playerSkele.AddComponent<BoxCollider>();
-
-
         // Get necessary components
+        GameObject enemyBox = GameObject.FindWithTag("Enemy");
+        playerSkele = GameObject.Find("Skeleton");
+        skeleBox = playerSkele.GetComponent<BoxCollider>();
         skeletonRb = playerSkele.GetComponent<Rigidbody>();
         playerAnim = playerSkele.GetComponent<Animator>();
 
@@ -42,25 +48,13 @@ public class SkeletonController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Calls the method to move skeleton
         SkeleMovement();
+        HandleRotationInput();
 
-        /*if (isInCombat == true) 
-        {
-
-            playerAnim.SetBool("isBeingAttacked", true);
-            playerAnim.runtimeAnimatorController = attackSkele;
-        }
-        if (isInCombat == false)
-        {
-
-            playerAnim.SetBool("isBeingAttacked", false);
-            playerAnim.runtimeAnimatorController = attackSkele;
-        }*/
     }
 
-
-
-
+    // Moves the skeleton on X and Z
     void SkeleMovement()
     {
         float horizontalInput = Input.GetAxis("Horizontal");
@@ -71,24 +65,20 @@ public class SkeletonController : MonoBehaviour
         // Update the Rigidbody velocity to move the player
         skeletonRb.velocity = new Vector3(movementInput.x, skeletonRb.velocity.y, movementInput.z);
 
+        // Provides animation upon input switching between idle and walking
         if (horizontalInput != 0 || verticalInput != 0)
         {
             playerAnim.SetBool("isWalking", true);
             playerAnim.runtimeAnimatorController = walkSkele;
 
+            // Rotates the character based on input direction
+            Vector3 direction = new Vector3(horizontalInput, 0.0f, verticalInput);
 
-
-            if (horizontalInput != 0)
+            if (direction != Vector3.zero)
             {
-                float rotationAmount = -horizontalInput * rotationSpeed * Time.deltaTime;
-                skeletonRb.transform.Rotate(0, -rotationAmount, 0);
+                Quaternion toRotation = Quaternion.LookRotation(direction, Vector3.up);
+                playerSkele.transform.rotation = Quaternion.RotateTowards(playerSkele.transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
             }
-            if (verticalInput != 0)
-            {
-                float rotationAmount = -verticalInput * rotationSpeed * Time.deltaTime;
-                skeletonRb.transform.Rotate(0, -rotationAmount, 0);
-            }
-
         }
         else
         {
@@ -97,18 +87,57 @@ public class SkeletonController : MonoBehaviour
         }
     }
 
-    /*private void OnTriggerEnter(Collider other)
+    // Adds the functionality of when entering the box collider of enemy bool isInCombat
+    private void OnTriggerEnter(Collider other)
     {
-        if (other = enemyBox)
+        if (other.CompareTag("Enemy"))
         {
-
             isInCombat = true;
         }
         else
         {
             isInCombat = false;
         }
-    }*/
+    }
+
+    void RotateCharacter(float angle)
+    {
+        // Rotate the character by the given angle around the y-axis
+        playerSkele.transform.Rotate(0, angle, 0);
+    }
+
+    void UpdateDirection(bool isRightArrow)
+    {
+        switch (currentDirection)
+        {
+            case Direction.Forward:
+                currentDirection = isRightArrow ? Direction.Right : Direction.Left;
+                break;
+            case Direction.Right:
+                currentDirection = isRightArrow ? Direction.Backward : Direction.Forward;
+                break;
+            case Direction.Backward:
+                currentDirection = isRightArrow ? Direction.Left : Direction.Right;
+                break;
+            case Direction.Left:
+                currentDirection = isRightArrow ? Direction.Forward : Direction.Backward;
+                break;
+        }
+    }
+
+    void HandleRotationInput()
+    {
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            RotateCharacter(90);
+            UpdateDirection(true);
+        }
+        else if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            RotateCharacter(180);
+            UpdateDirection(false);
+        }
+    }
 
 
 }
